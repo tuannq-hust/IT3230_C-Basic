@@ -1,0 +1,1064 @@
+% =========================================================
+% KHAI BÁO CẤU HÌNH (PREAMBLE)
+% =========================================================
+\documentclass[aspectratio=169, 9pt]{beamer}
+
+% Load theme HUST (nhớ để file beamerthemeHUST.sty cùng thư mục)
+\usetheme[theme=blue,logo=logowithtextvi]{HUST} 
+
+% Các package cần thiết
+\usepackage[T5]{fontenc} % Hỗ trợ tiếng Việt
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}     
+\usepackage{enumitem}    
+\usepackage{tcolorbox}   
+\usepackage{listings}    
+\usepackage{verbatim}
+\usepackage{amsmath}
+\usepackage[table]{xcolor}
+\usepackage{tikz}
+\usepackage{minted}
+
+\usetikzlibrary{decorations.pathreplacing,arrows.meta}
+\tcbuselibrary{listingsutf8, skins, minted}
+
+% Định nghĩa lệnh đặt nội dung tự do
+\newcommand{\placecontent}[4]{%
+  \tikz[remember picture,overlay]
+    \node[anchor=north west]
+      at ([xshift=#1,yshift=-#2]current page.north west)
+      {\parbox{#3}{#4}};
+}
+% Thông tin metadata
+\title{LẬP TRÌNH C CƠ BẢN}
+\author{SoICT - HUST}
+\date{}
+
+% Chỉnh footer hiện số trang
+\setbeamertemplate{footline}{%
+  \hfill%
+  \insertframenumber\hspace{0.5cm}\vspace{0.3cm}
+}
+
+% =========================================================
+% NỘI DUNG CHÍNH (BODY)
+% =========================================================
+\begin{document}
+
+% ==================================================================
+% --- WEEK 2: FILE HANDLING ---
+% ==================================================================
+% --- TRANG 1: BRAND SLIDE (Trang bìa HUST) ---
+\HUSTInsertBrandSlide
+
+% --- TRANG 2: TÊN BÀI HỌC (FIX THEO TEMPLATE BRO GỬI) ---
+{
+\HUSTUseBackground{onelove.pdf} % Background chuẩn template
+\begin{frame}
+  \ifdefstring{\insertaspectratio}{169}{
+    % Logo góc
+    \HUSTCornerImage{assets/logo/04.pdf}
+
+    % Tên môn học (Cố định)
+    \placecontent{0.5cm}{0.33\paperheight}{0.85\paperwidth}{
+        \color{\HUSTFrameTitleTextColor}\bfseries\fontsize{22pt}{30pt}\selectfont
+        LẬP TRÌNH C CƠ BẢN
+    }
+    
+    % Tên bài học (Thay đổi theo tuần)
+    \placecontent{0.5cm}{0.60\paperheight}{0.8\paperwidth}{
+        \color{\HUSTFrameTitleTextColor}\fontsize{14pt}{18pt}\selectfont
+        File - Tệp tin
+    }
+  }{}
+\end{frame}
+}
+
+\section{File - Tệp tin}
+
+% --- SLIDE 3 (FIXED): NỘI DUNG ---
+% PDF Page 3: Nội dung (Dạng liệt kê đơn giản)
+\begin{frame}{Nội dung}
+    \begin{itemize}[label=$\bullet$, itemsep=1em]
+        \item Khái niệm cơ bản
+        \item Đóng và mở tệp
+        \item Một số thao tác với tệp
+        \item Xử lý file theo từng ký tự
+        \item Xử lý file văn bản theo dòng
+        \item Đọc/ghi dữ liệu theo định dạng
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 4 (FIXED): LÀM VIỆC VỚI TẬP TIN (Chuẩn ảnh image_18e505.png) ---
+\begin{frame}[fragile]{Làm việc với tập tin}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item Tập tin (file) cho phép lưu trữ thông tin lâu dài trong bộ nhớ ngoài.
+        \item Chương trình không chỉ nhập dữ liệu từ bàn phím, hiển thị dữ liệu trên màn hình mà có thể nhập dữ liệu từ tập tin, ghi dữ liệu ra tập tin.
+        \item Ngôn ngữ C cho phép giao tiếp với các tập tin thông qua một thực thể đặc biệt gọi là \textbf{con trỏ (kiểu) file}.
+        \begin{itemize}[label=$\bullet$, itemsep=0.4em]
+            \item Các hàm đọc, ghi tập tin sử dụng con trỏ file là đối số.
+            \item Sau mỗi thao tác đọc/ghi vị trí của con trỏ file sẽ thay đổi.
+        \end{itemize}
+        \item Khai báo: FILE *fptr;
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 5 (PDF Page 5): CÁC THAO TÁC CƠ BẢN ---
+\begin{frame}{Các thao tác cơ bản khi làm việc với tập tin}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=1em]
+        \item Mở tập tin
+        \item Đọc dữ liệu từ tập tin vào bộ nhớ chương trình (cụ thể là vào các biến)
+        \item Ghi (xuất) dữ liệu từ bộ nhớ chương trình ra tập tin
+        \item Đóng tập tin
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 6 (PDF Page 6): FILE VĂN BẢN VÀ FILE NHỊ PHÂN ---
+\begin{frame}{File văn bản và File nhị phân}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item \textbf{File văn bản:}
+        \begin{itemize}[label=$\circ$, itemsep=0.4em]
+            \item Có nội dung là văn bản chứa các ký tự nhìn thấy được.
+            \item Có thể được tạo ra bằng cách dùng các phần mềm thông dụng như Notepad, Notepad++, Sublime Text,...
+            \item Thuận tiện trong việc sử dụng hàng ngày, nhưng kém bảo mật và cần nhiều bộ nhớ để lưu trữ hơn.
+        \end{itemize}
+        
+        \item \textbf{File nhị phân:}
+        \begin{itemize}[label=$\circ$, itemsep=0.4em]
+            \item Nội dung lưu trữ dưới dạng nhị phân (chuỗi 0 và 1).
+            \item Bảo mật và tiết kiệm không gian lưu trữ hơn.
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 7: MỞ TẬP TIN (HÀM FOPEN) ---
+% PDF Page 7: fopen code example
+\begin{frame}[fragile]{Mở tập tin}
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item Sử dụng hàm \texttt{fopen()}
+        \item Nguyên mẫu: 
+        \begin{tcolorbox}[colback=gray!5, boxrule=0pt, frame hidden, left=2pt]
+            \mintinline{c}{FILE *fopen(const char *filename, const char *mode);}
+        \end{tcolorbox}
+    \end{itemize}
+
+    \vspace{0.1cm}
+    
+    % Sử dụng tcblisting tích hợp minted để thống nhất giao diện
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=2pt,                % Giữ bo góc 2pt như yêu cầu cũ của bạn
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\small,    % Sử dụng cỡ chữ small theo yêu cầu slide này
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+FILE *fptr;
+if ((fptr = fopen("test.txt", "r")) == NULL) {
+    printf("Cannot open test.txt file.\n");
+    exit(1);
+}
+    \end{tcblisting}
+\end{frame}
+
+% --- SLIDE 8: MỞ TẬP TIN (FILENAME) ---
+% PDF Page 8: Giải thích filename
+\begin{frame}[fragile]{Mở tập tin}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=1em]
+        \item \textbf{filename:} đường dẫn và tên tập tin.
+        \begin{itemize}[label=$\circ$, itemsep=0.5em]
+            \item Nhận giá trị là một giá trị xâu ký tự: \texttt{"data.txt"}
+            \item Có thể chứa đường dẫn đầy đủ tới tập tin:\\
+            \texttt{"/root/hedspi/CProgrammingBasic/Lab1/data.txt"}
+            \item Có thể dùng một biến mảng ký tự để lưu trữ:\\
+            \texttt{char file\_name[] = "junk.txt";}
+        \end{itemize}
+        
+        \item \textbf{Lưu ý:} Nếu đường dẫn không được mô tả, tập tin mặc định nằm tại cùng thư mục chứa chương trình.
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 9: CÁC THAM SỐ MODE (FILE VĂN BẢN) ---
+% PDF Page 9: Bảng mode r, w, a...
+\begin{frame}{Các tham số mode cho tập tin văn bản}
+    \small
+    \renewcommand{\arraystretch}{1.5} % Tăng chiều cao dòng bảng
+    \begin{table}
+        \centering
+        \begin{tabular}{|c|p{0.9\textwidth}|}
+            \hline
+            \textbf{mode} & \textbf{Ý nghĩa} \\
+            \hline
+            \texttt{"r"} & Mở một tập tin văn bản đã có chỉ để đọc. Nếu tập tin không tồn tại, \texttt{fopen()} trả về NULL. \\
+            \hline
+            \texttt{"w"} & Mở một tập tin văn bản chỉ để ghi. Nếu file đã tồn tại, nội dung sẽ bị ghi đè. Nếu file không tồn tại, nó sẽ được tạo tự động. \\
+            \hline
+            \texttt{"a"} & Mở một tập tin văn bản đã có để ghi thêm vào cuối. \\
+            \hline
+            \texttt{"r+"} & Mở một tập tin văn bản đã có cho phép cả đọc và ghi. Nếu tập tin không tồn tại, \texttt{fopen()} trả về NULL. \\
+            \hline
+            \texttt{"w+"} & Mở file văn bản cho phép cả đọc và ghi. \\
+            \hline
+            \texttt{"a+"} & Mở file văn bản cho phép cả đọc và ghi (append). \\
+            \hline
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+% --- SLIDE 10: CÁC THAM SỐ MODE (FILE NHỊ PHÂN) ---
+% PDF Page 10: Bảng mode rb, wb, ab...
+\begin{frame}{Các tham số mode cho tập tin nhị phân}
+    \small
+    \renewcommand{\arraystretch}{1.5}
+    \begin{table}
+        \centering
+        \begin{tabular}{|c|p{0.9\textwidth}|}
+            \hline
+            \textbf{mode} & \textbf{Ý nghĩa} \\
+            \hline
+            \texttt{"rb"} & Mở tập tin nhị phân đã có chỉ để đọc. \\
+            \hline
+            \texttt{"wb"} & Mở tập tin nhị phân chỉ để ghi. \\
+            \hline
+            \texttt{"ab"} & Mở tập tin nhị phân đã có để ghi thêm vào cuối. \\
+            \hline
+            \texttt{"r+b"} & Mở tập tin nhị phân đã có cho phép cả đọc và ghi. \\
+            \hline
+            \texttt{"w+b"} & Mở tập tin nhị phân cho phép cả đọc và ghi. Nếu file đã tồn tại, nội dung sẽ bị ghi đè. Nếu file không tồn tại, nó sẽ được tạo tự động. \\
+            \hline
+            \texttt{"a+b"} & Mở hoặc tạo tập tin nhị phân cho phép cả đọc và ghi vào cuối. \\
+            \hline
+        \end{tabular}
+    \end{table}
+\end{frame}
+
+% --- SLIDE 11: ĐÓNG TẬP TIN ---
+% PDF Page 11: fclose
+\begin{frame}[fragile]{Đóng tập tin}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=1em]
+        \item Hàm \texttt{fclose} được sử dụng để ngắt kết nối giữa một con trỏ tập tin với tập tin mà nó đang tham chiếu tới.
+        
+        \vspace{0.2cm}
+        \begin{tcolorbox}[colback=gray!5, boxrule=0pt, frame hidden, width=0.5\textwidth]
+            \texttt{int fclose(FILE *stream);}
+        \end{tcolorbox}
+        \vspace{0.2cm}
+        
+        \item Cần đóng tập tin khi đã hoàn tất các thao tác đọc ghi với tập tin.
+    \end{itemize}
+\end{frame}
+% --- SLIDE 12: VÍ DỤ MỞ ĐÓNG FILE ---
+% PDF Page 12: Code ví dụ haiku.txt
+\begin{frame}[fragile]{Ví dụ}
+    \small
+    \textbf{Ví dụ 1. Mở và đóng tệp}
+    
+    \vspace{0.2cm}
+    % Sử dụng tcblisting tích hợp minted để đồng bộ hóa giao diện toàn bài giảng
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=2pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+#include <stdio.h>
+
+enum { SUCCESS, FAIL };
+
+int main(void) {
+    FILE* fptr;
+    char filename[] = "haiku.txt";
+    int reval = SUCCESS;
+
+    /* Kiem tra mo file de doc (read mode) */
+    if ((fptr = fopen(filename, "r")) == NULL) {
+        printf("Cannot open %s.\n", filename);
+        reval = FAIL;
+    } else {
+        /* In dia chi cua con tro FILE (dang hexadecimal) */
+        printf("The value of fptr: %p\n", (void*)fptr);
+        printf("Ready to close the file.\n");
+        
+        /* Luon dong file sau khi su dung */
+        fclose(fptr);
+    }
+
+    return reval;
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 13: CHUYỂN MỤC (SECTION SLIDE) ---
+% PDF Page 13: "Xử lý file theo ký tự"
+{
+\HUSTUseBackground{theme_hust_oneside.pdf}
+\begin{frame}
+    \placecontent{0.38\paperwidth}{0.45\paperheight}{0.6\paperwidth}{
+        \centering
+        \color{HUSTRed}\bfseries\fontsize{24pt}{28pt}\selectfont
+        Xử lý file theo ký tự
+    }
+\end{frame}
+}
+\section{Xử lý file theo ký tự}
+
+% --- SLIDE 14 (FIXED): ĐỌC VÀ GHI VỚI TẬP TIN (I) ---
+% Thuần text, list lồng nhau giống ảnh
+\begin{frame}[fragile]{Đọc và ghi với tập tin (I)}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item Trong ngôn ngữ C, chương trình có thể thực hiện các thao tác vào/ra (đọc/ghi) theo những cách thức khác nhau:
+        \begin{itemize}[label=$\bullet$, itemsep=0.4em]
+            \item \textbf{Đọc hoặc ghi mỗi lần một ký tự}
+            \item Đọc hoặc ghi mỗi lần một dòng văn bản.
+            \item Đọc hoặc ghi một khối (block) các ký tự (byte) mỗi lần.
+        \end{itemize}
+        
+        \item \textbf{Đọc hoặc ghi mỗi lần một ký tự.}
+        \begin{itemize}[label=$\bullet$, itemsep=0.4em]
+            \item Cặp đôi hàm định nghĩa trong thư viện \texttt{stdio.h}: \texttt{fgetc()} và \texttt{fputc()}
+            \item Nguyên mẫu:
+            \begin{itemize}[label=$\bullet$, itemsep=0.2em]
+                \item \texttt{int fgetc(FILE *stream);}
+                \item \texttt{int fputc(int c, FILE *stream);}
+            \end{itemize}
+        \end{itemize}
+
+        \item Ký tự EOF: khi đến cuối tập tin, các hàm trên trả về EOF.
+    \end{itemize}
+\end{frame}
+% --- SLIDE 15: VÍ DỤ SAO CHÉP FILE (PHẦN HÀM) ---
+% PDF Page 15: Hàm CharReadWrite
+\begin{frame}[fragile]{Ví dụ}
+    \small
+    \textbf{Ví dụ 1. Sao chép nội dung file}
+    \begin{itemize}[label=$\bullet$, itemsep=0.4em]
+        \item Tạo một file văn bản với tên \texttt{lab1.txt} với nội dung bất kỳ, lưu trong thư mục cùng với chương trình.
+        \item Viết chương trình đọc từ file trên mỗi lần một ký tự, sau đó ghi chúng vào một file mới với tên \texttt{lab1w.txt}
+    \end{itemize}
+    \vspace{0.1cm}
+
+    % Sử dụng tcblisting tích hợp minted để đồng bộ hóa giao diện
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=2pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\small, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+#include <stdio.h>
+
+enum { SUCCESS, FAIL };
+
+void CharReadWrite(FILE *fin, FILE *fout) {
+    int c;
+    /* Doc tung ky tu cho den khi het file (EOF) */
+    while ((c = fgetc(fin)) != EOF) {
+        fputc(c, fout); /* Ghi ky tu vao file dich */
+        putchar(c);     /* Hien thi ky tu len man hinh */
+    }
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 16 (FIXED): VÍ DỤ SAO CHÉP FILE (PHẦN MAIN) ---
+% PDF Page 16: Hàm main gọi CharReadWrite
+\begin{frame}[fragile]{Ví dụ}
+    % Sử dụng tcblisting tích hợp minted để thống nhất giao diện
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=2pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+int main(void) {
+    FILE *fptr1, *fptr2;
+    char filename1[] = "lab1w.txt";
+    char filename2[] = "lab1.txt";
+    int reval = SUCCESS;
+
+    /* Mo file dich de ghi */
+    if ((fptr1 = fopen(filename1, "w")) == NULL) {
+        printf("Cannot open %s.\n", filename1);
+        reval = FAIL;
+    } 
+    /* Mo file nguon de doc */
+    else if ((fptr2 = fopen(filename2, "r")) == NULL) {
+        printf("Cannot open %s.\n", filename2);
+        reval = FAIL;
+    } 
+    /* Neu ca hai file mo thanh cong thi thuc hien sao chep */
+    else {
+        CharReadWrite(fptr2, fptr1);
+        fclose(fptr1);
+        fclose(fptr2);
+    }
+
+    return reval;
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 17: VÍ DỤ 2 (CHUYỂN ĐỔI CHỮ HOA/THƯỜNG) ---
+\begin{frame}[fragile]{Ví dụ}
+    \small
+    \textbf{Ví dụ 2.}
+    \begin{itemize}[label=$\bullet$, itemsep=0.6em]
+        \item Viết chương trình đọc nội dung từ một tập tin văn bản, mỗi lần đọc một ký tự.
+        \item Chương trình sẽ chuyển ký tự chữ cái hoa thành ký tự chữ cái thường và ngược lại, sau đó ghi vào một tập tin khác.
+        \item Chú ý với các ký tự khác – chương trình vẫn thực hiện sao chép một cách thông thường sang tập tin mới.
+    \end{itemize}
+    \vspace{0.2cm}
+
+    % Sử dụng tcblisting tích hợp minted để thống nhất giao diện
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\small, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=0.5mm
+    }
+void CharReadWrite(FILE *fin, FILE *fout) {
+    int c;
+    while ((c = fgetc(fin)) != EOF) {
+        /* Chuyen doi hoa/thuong dung thu vien ctype.h */
+        if (islower(c)) c = toupper(c);
+        else if (isupper(c)) c = tolower(c);     
+        fputc(c, fout); /* Ghi vao tap tin moi */
+        putchar(c);     /* Hien thi ra man hinh */
+    }
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 18: BÀI TẬP 1 (MYCP) ---
+\begin{frame}[fragile]{Bài tập}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=1em]
+        \item \textbf{Bài tập 1.} Viết chương trình có tên \texttt{mycp} hoạt động tương tự lệnh \texttt{cp} trong các hệ điều hành UNIX/LINUX. Nó có thể sao chép một tập tin văn bản sang một tập tin mới theo cú pháp:
+        \begin{itemize}[label=$\bullet$, itemsep=0.5em]
+            \item \texttt{mycp <tập\_tin\_1> <tập\_tin\_2>}
+        \end{itemize}
+        \item Đường dẫn, tên các tập tin được cung cấp dưới dạng đối số dòng lệnh.
+        \item \textbf{Chú ý:} Chương trình phải kiểm tra cú pháp sử dụng (vd số đối số – thông báo lỗi và hiển thị hướng dẫn khi cần..)
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 19: BÀI TẬP 2 (APPEND FILE) ---
+\begin{frame}[fragile]{Bài tập}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=1em]
+        \item \textbf{Bài tập 2:} Viết chương trình nhận tên hai tập tin ở đối số dòng lệnh, sau đó tiến hành ghép nội dung của tập tin thứ hai vào cuối tập tin thứ nhất. Giả sử cả hai tập tin đều tồn tại.
+        \item Cú pháp sử dụng:
+        \begin{itemize}[label=$\bullet$, itemsep=0.5em]
+            \item \texttt{apd <file1> <file2>}
+        \end{itemize}
+        \item \textbf{Chú ý:} Chương trình phải kiểm tra cú pháp sử dụng (vd số đối số – thông báo lỗi và hiển thị hướng dẫn khi cần..)
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 20: BÀI TẬP 3 (UCONVERT) ---
+\begin{frame}[fragile]{Bài tập}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=1em]
+        \item \textbf{Bài tập 3.} Viết chương trình có tên \texttt{uconvert} có chức năng chuyển đổi tất cả các chữ cái trong nội dung một tập tin cụ thể (được cung cấp trong đối số dòng lệnh) thành chữ hoa và ghi lại nội dung mới vào chính tập tin đó.
+        \item \textbf{Cú pháp:} \texttt{uconvert tata.txt}
+        \item \textbf{Ví dụ:}
+        \begin{itemize}[label=$\bullet$, itemsep=0.5em]
+            \item File nguồn \texttt{tata.txt}: \texttt{helloworld}
+            \item Nội dung \texttt{tata.txt} sau khi chạy chương trình: \texttt{HELLOWORLD}.
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+% --- SLIDE 21: BÀI TẬP 4 (CAESAR CIPHER) ---
+\begin{frame}[fragile]{Bài tập}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item \textbf{Bài tập 4.} Viết một chương trình có thể sử dụng cùng một lúc hai chức năng mã hóa và giải mã một tập tin văn bản sử dụng mật mã Caesar (mã hóa cộng) như sau.
+        \item Chương trình nhận ba đối số:
+        \begin{itemize}[label=$\bullet$]
+            \item \texttt{<tập tin nguồn> <độ dịch chuyển> <tập tin đích>}
+        \end{itemize}
+        \item Khi cần mã hóa, chạy chương trình với độ dịch chuyển (offset) $n$ là một số nguyên dương. Chương trình sẽ thay thế mỗi ký tự trong tập tin bởi một ký tự đứng sau nó $n$ vị trí trong bảng mã ASCII.
+        \item Ví dụ với offset = 3 thì $A \rightarrow D$, $B \rightarrow E$.
+        \item Khi giải mã, chạy chương trình với đầu vào là tập tin mã hóa và giá trị độ dịch chuyển là số âm tương ứng (VD offset = -3).
+        \item \textbf{Chức năng nâng cao (tùy chọn):} Với các ký tự là chữ cái thực hiện dịch chuyển vòng tròn: $A \rightarrow D, ..., Z \rightarrow C$.
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 22: CHUYỂN MỤC (SECTION SLIDE) ---
+% PDF Page 22: "Xử lý file theo dòng"
+{
+\HUSTUseBackground{theme_hust_oneside.pdf}
+\begin{frame}
+    \placecontent{0.38\paperwidth}{0.45\paperheight}{0.6\paperwidth}{
+        \centering
+        \color{HUSTRed}\bfseries\fontsize{24pt}{28pt}\selectfont
+        Xử lý file theo dòng
+    }
+\end{frame}
+}
+\section{Xử lý file theo dòng}
+
+% --- SLIDE 23 (FIXED FINAL): THAO TÁC FILE THEO DÒNG ---
+% PDF Page 23: Thuần text, không box
+\begin{frame}[fragile]{Thao tác với tập tin theo dòng}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.6em]
+        \item Sử dụng hai hàm: \texttt{fgets()} và \texttt{fputs()}
+        
+        \item \texttt{char *fgets(char *s, int n, FILE *stream);}
+        \begin{itemize}[label=$\circ$, itemsep=0.3em]
+            \item s : tham số ứng với xâu ký tự dùng để lưu nội dung dòng đọc từ tập tin.
+            \item n : độ dài xâu ký tự s – tính cả ký tự NULL.
+        \end{itemize}
+
+        \item Hàm \texttt{fgets()} dừng khi thỏa mãn một trong các điều kiện sau: đọc được n-1 ký tự từ tập tin, gặp ký tự xuống dòng mới hoặc EOF. Sau đó thêm với ký tự null vào cuối xâu s.
+
+        \item Hàm: \texttt{int fputs(const char *s, FILE *stream);}
+        \begin{itemize}[label=$\circ$, itemsep=0.3em]
+            \item s: Xâu ký tự cần ghi ra tập tin
+            \item stream: con trỏ file
+        \end{itemize}
+
+        \item Kết quả trả về
+        \begin{itemize}[label=$\circ$, itemsep=0.3em]
+            \item 0 nếu thao tác thành công
+            \item khác 0 nếu thất bại.
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+% --- SLIDE 24: VÍ DỤ 1 (LINE READ WRITE - CODE HÀM) ---
+% PDF Page 24: Hàm LineReadWrite dùng fgets/fputs
+\begin{frame}[fragile]{Ví dụ}
+    \small
+    \textbf{Ví dụ 1.} Thực hiện lại bài tập lập trình sao chép nội dung tập tin, tuy nhiên thay vì sử dụng cặp hàm \texttt{fgetc} và \texttt{fputc} – ta sử dụng cặp hàm \texttt{fgets} và \texttt{fputs} để đọc từ tập tin và ghi vào tập tin mỗi lần một dòng trong nội dung văn bản.
+    
+    \vspace{0.2cm}
+    
+    % Sử dụng tcblisting tích hợp minted để thống nhất định dạng
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=2pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\small, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+#include <stdio.h>
+enum { SUCCESS, FAIL };
+#define MAX_LEN 81
+
+void LineReadWrite(FILE *fin, FILE *fout) {
+    char buff[MAX_LEN];
+    
+    /* Doc tung dong cho den khi het file (NULL) */
+    while (fgets(buff, MAX_LEN, fin) != NULL) {
+        fputs(buff, fout);  /* Ghi dong vua doc vao file dich */
+        printf("%s", buff); /* Hien thi dong len man hinh */
+    }
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 25: VÍ DỤ 1 (LINE READ WRITE - CODE MAIN) ---
+% PDF Page 25: Hàm main gọi LineReadWrite
+\begin{frame}[fragile]{Ví dụ}
+    % Sử dụng tcblisting tích hợp minted để thống nhất giao diện toàn bài giảng
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=2pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+int main(void) {
+    FILE *fptr1, *fptr2;
+    char filename1[] = "lab1a.txt";
+    char filename2[] = "lab1.txt";
+    int reval = SUCCESS;
+
+    /* Mo file dich de ghi van ban */
+    if ((fptr1 = fopen(filename1, "w")) == NULL) {
+        printf("Cannot open %s.\n", filename1);
+        reval = FAIL;
+    } 
+    /* Mo file nguon de doc van ban */
+    else if ((fptr2 = fopen(filename2, "r")) == NULL) {
+        printf("Cannot open %s.\n", filename2);
+        reval = FAIL;
+    } 
+    else {
+        /* Goi ham sao chep theo tung dong */
+        LineReadWrite(fptr2, fptr1);
+        fclose(fptr1);
+        fclose(fptr2);
+    }
+    return reval;
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 26: VÍ DỤ 2 (ĐỀ BÀI) ---
+% PDF Page 26: Yêu cầu sửa chương trình đếm dòng
+\begin{frame}[fragile]{Ví dụ}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item \textbf{Ví dụ 2.} Sửa chương trình sao chép tập tin ở slide trước để chương trình chỉ hiện nội dung tập tin ra màn hình, sau đó hiển thị số các dòng văn bản.
+        
+        \item \textbf{Minh họa về giao diện của chương trình:}
+        \begin{itemize}[label=$\circ$, itemsep=0.3em]
+            \item Reading file Haiku.txt.... done!
+            \item Haiku haiku
+            \item Tokyo
+            \item Hanoi
+            \item This file has 3 lines.
+        \end{itemize}
+
+        \item \textbf{Sửa mã nguồn hàm LineReadWrite:}
+        \begin{itemize}[label=$\bullet$, itemsep=0.3em]
+            \item Loại bỏ lệnh sử dụng \texttt{fputs}
+            \item Tăng bộ đếm số dòng văn bản mỗi lần đọc một dòng.
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+% --- SLIDE 27 (FIXED FINAL): VÍ DỤ 2 (CODE GIẢI) ---
+% PDF Page 27: Gộp 2 hàm vào 1 box code duy nhất
+\begin{frame}[fragile]{Ví dụ}
+    \vspace{0.1cm}
+    
+    % Sử dụng tcblisting tích hợp minted để gộp code hiệu quả
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=0.95 % Giảm nhẹ giãn dòng để code gọn hơn
+        },
+        listing only,
+        left=5mm, top=1.5mm, bottom=1.5mm
+    }
+enum { SUCCESS, FAIL };
+
+int LineReadWrite(FILE* fin) {
+    char buff[MAX_LEN]; 
+    int count = 0;
+    while (fgets(buff, MAX_LEN, fin) != NULL) {
+        count++; 
+        printf("%s", buff);
+    }
+    return count;
+}
+
+int main(void) {
+    FILE* fptr1; 
+    int c = 0;
+    char filename1[] = "haiku.txt";
+    int reval = SUCCESS;
+
+    if ((fptr1 = fopen(filename1, "r")) == NULL) {
+        printf("Cannot open %s.\n", filename1);
+        reval = FAIL;
+    } else {
+        printf("Reading file %s .. done!\n", filename1);
+        c = LineReadWrite(fptr1);
+        printf("The file has %d lines.\n", c);
+        fclose(fptr1);
+    }
+    return reval;
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 28: BÀI TẬP (MYCAT & NỐI DÒNG) ---
+% PDF Page 28: Bài tập 1, 2
+\begin{frame}[fragile]{Bài tập}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item \textbf{Bài tập 1.} Viết chương trình \texttt{mycat} đọc và hiển thị nội dung một tập tin văn bản trên màn hình. Chương trình hỗ trợ hai cú pháp sử dụng như sau:
+        \begin{itemize}[label=$\circ$, itemsep=0.3em]
+            \item \texttt{cat <filename>} : Hiển thị một lần toàn bộ nội dung.
+            \item \texttt{cat <filename> -p} : Hiển thị theo từng trang. Người dùng chạm một phím để xem trang tiếp theo.
+        \end{itemize}
+
+        \item \textbf{Bài tập 2.} Viết chương trình nhận đối số dòng lệnh là đường dẫn đến một file văn bản (nội dung dưới 80 dòng). Chương trình thêm một dòng mới vào cuối file nói trên với nội dung chứa các ký tự đầu tiên của các dòng trong file ban đầu.
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 29: CHUYỂN MỤC (SECTION SLIDE) ---
+% PDF Page 29: Đọc ghi file có định dạng
+{
+\HUSTUseBackground{theme_hust_oneside.pdf}
+\begin{frame}
+    \placecontent{0.38\paperwidth}{0.45\paperheight}{0.6\paperwidth}{
+        \centering
+        \color{HUSTRed}\bfseries\fontsize{24pt}{28pt}\selectfont
+        Đọc ghi file văn bản có định dạng
+    }
+\end{frame}
+}
+\section{Đọc ghi file văn bản có định dạng}
+% --- SLIDE 30: ĐỌC GHI ĐỊNH DẠNG (LÝ THUYẾT) ---
+% PDF Page 30
+\begin{frame}[fragile]{Đọc ghi file văn bản có định dạng}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item Đây là các hàm hữu ích để xử lý dữ liệu có cấu trúc (thuộc các kiểu dữ liệu khác nhau) từ văn bản.
+        
+        \item \textbf{Hàm fscanf:}
+        \begin{itemize}[label=$\circ$, itemsep=0.3em]
+            \item \texttt{int fscanf(FILE *stream, const char *format, ...);}
+            \item Hàm \texttt{fscanf} hoạt động tương tự hàm \texttt{scanf}, điểm khác biệt là nó đọc nội dung từ tập tin (đại diện bởi con trỏ file) để ghi vào các biến.
+        \end{itemize}
+
+        \item \textbf{Hàm fprintf:}
+        \begin{itemize}[label=$\circ$, itemsep=0.3em]
+            \item \texttt{int fprintf(FILE *stream, const char *format, ...);}
+            \item Tương tự như hàm \texttt{printf} nhưng thay vì đưa nội dung ra màn hình thì nó ghi nội dung từ các đối số ra tập tin.
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+% --- SLIDE 31: VÍ DỤ 1 (LINE LENGTH) ---
+% PDF Page 31
+\begin{frame}[fragile]{Ví dụ}
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+     \item \textbf{Ví dụ 1.} Viết chương trình đọc từng dòng văn bản từ một tập tin, sau đó tính độ dài xâu ký tự trên mỗi dòng và ghi ra một tập tin mới theo định dạng sau: \texttt{<độ dài dòng> <Nội dung dòng>}
+     \item Ví dụ, với một dòng trong tập tin đầu vào: \textit{The quick brown fox jumps over the lazy dog.} Trong tập tin đầu ra sẽ là: \texttt{44 The quick brown fox...} 
+    \end{itemize}
+    \vspace{0.2cm}
+
+    % Sử dụng tcblisting tích hợp minted để thống nhất giao diện
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+void LineReadWrite(FILE* fin, FILE* fout) {
+    char buff[MAX_LEN];
+    int len;
+
+    while (fgets(buff, MAX_LEN, fin) != NULL) {
+        /* Tinh do dai xau (loai bo ky tu xuong dong \n) */
+        len = strlen(buff);
+        if (buff[len - 1] == '\n') {
+            len--; 
+        }
+
+        /* Ghi vao file theo dinh dang: <do dai> <noi dung> */
+        fprintf(fout, "%d %s", len, buff);
+        printf("%s", buff);
+    }
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 32: VÍ DỤ 2 (ĐỀ BÀI) ---
+% PDF Page 32
+\begin{frame}[fragile]{Ví dụ}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item \textbf{Ví dụ 2.} Viết chương trình đọc một dãy số từ bàn phím và ghi chúng ra tệp \texttt{out.txt} theo thứ tự ngược lại. Tổng các số được ghi vào cuối file.
+        \item Cú pháp nhập liệu từ bàn phím như sau: Số đầu tiên là số lượng các số trong dãy sẽ nhập, sau đó là dãy các số nguyên. Ví dụ: khi người dùng nhập: 4 12 -45 56 3
+        \item  “4” là số các số sẽ được nhập, bao gồm “12 -45 56 3”. Nội dung của tập tin “out.txt” sẽ là, với 26 là tổng của 4 số
+        \item \textbf{Output (out.txt):} \texttt{3 56 -45 12 26} (với 26 là tổng).
+        \item Vì số lượng các số nhập thay đổi theo mỗi lần chạy, chương trình cần cấp phát động bộ nhớ cho các số này sử dụng hàm malloc( ).
+    \end{itemize}
+\end{frame}
+% --- SLIDE 33: VÍ DỤ 2 (CODE PHẦN 1) ---
+% PDF Page 33
+\begin{frame}[fragile]{Ví dụ}
+    % Sử dụng tcblisting tích hợp minted để thống nhất định dạng chuyên nghiệp
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+enum { SUCCESS, FAIL };
+
+int main(void) {
+    FILE* fp;
+    int* p;
+    int i, n, value, sum;
+    int reval = SUCCESS;
+
+    printf("Enter a list of numbers with the first is the size of list: \n");
+    scanf("%d", &n);
+
+    /* Cap phat bo nho dong dua tren so luong phan tu n */
+    p = (int*)malloc(n * sizeof(int));
+    
+    if (p == NULL) {
+        printf("Memory allocation failed!\n");
+        return FAIL;
+    }
+
+    i = 0; sum = 0;
+    while (i < n) {
+        scanf("%d", &value);
+        p[i++] = value;
+        sum += value;
+    }
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 34: VÍ DỤ 2 (CODE PHẦN 2) ---
+% PDF Page 34
+\begin{frame}[fragile]{Ví dụ}
+    % Sử dụng tcblisting tích hợp minted để thống nhất định dạng chuyên nghiệp
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+    /* Mo file de ghi ket qua (dang van ban) */
+    if ((fp = fopen("out.txt", "w")) == NULL) {
+        printf("Can not open out.txt.\n");
+        reval = FAIL;
+    } else {
+        /* Ghi mang vao file theo thu tu nguoc lai */
+        for (i = n - 1; i >= 0; i--) {
+             fprintf(fp, "%d ", p[i]);
+        }
+        
+        /* Ghi gia tri tong vao cuoi file */
+        fprintf(fp, "%d", sum);
+        
+        fclose(fp);
+    }
+
+    /* Giai phong vung nho da cap phat dong */
+    free(p);
+    return reval;
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 35 (FIXED FINAL): VÍ DỤ 3 (ĐỀ BÀI PRODUCT) ---
+% PDF Page 35: Nội dung chuẩn theo yêu cầu text
+\begin{frame}[fragile]{Ví dụ}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.6em]
+        \item Ví dụ 3. Tạo một tập tin văn bản có tên product.txt, mỗi dòng trong đó chứa thông tin về một sản phẩm: ID (kiểu int), Product Name (xâu ký tự không chứa ký tự trắng), Price (kiểu double). Các trường dữ liệu trên phân tách với nhau bởi một ký tự space hoặc tab. Ví dụ
+        \begin{itemize}[label=$\bullet$, itemsep=0.2em]
+            \item 1 Samsung\_Television\_4K \hspace{1cm} 20000000
+            \item 2 Apple\_MacBook\_2020 \hspace{1.3cm} 18560000
+        \end{itemize}
+
+        \item Viết chương trình đọc tập tin trên vào một mảng các phần tử cấu trúc và sau đó hiện nội dung mảng trên ra màn hình dưới dạng:
+        \begin{itemize}[label=$\bullet$, itemsep=0.2em]
+            \item No \hspace{1.5cm} Product Name \hspace{2.5cm} Price
+            \item 1 Samsung\_Television\_4K \hspace{1.5cm} 20000000
+            \item \dots
+        \end{itemize}
+
+        \item Gợi ý
+        \begin{itemize}[label=$\bullet$, itemsep=0.3em]
+            \item Khi đọc số thực double dùng fscanf với xâu định dạng “\%lf”
+            \item Trong trường hợp các trường dữ liệu được phân tách bởi các ký hiệu như ; hay , (delimiter), có thể kết hợp sử dụng fscanf và fgetc để đọc được từng trường
+            \item 1000, John\_Allan, 28, NewYork
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+% --- SLIDE 36: VÍ DỤ 3 (CODE PHẦN 1) ---
+% PDF Page 36
+\begin{frame}[fragile]{Ví dụ}
+    % Sử dụng tcblisting tích hợp minted để hiển thị cấu trúc struct rõ ràng hơn
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+#include <stdio.h>
+
+enum { SUCCESS, FAIL };
+#define MAX_ELEMENT 10
+
+/* Định nghĩa cấu trúc sản phẩm */
+typedef struct {
+    int no;
+    char name[20];
+    double price;
+} product;
+
+int main(void) {
+    FILE* fp;
+    product arr[MAX_ELEMENT];
+    int i = 0, n;
+    int reval = SUCCESS;
+
+    printf("Loading file...\n");
+    if ((fp = fopen("product.txt", "r")) == NULL) {
+        printf("Can not open product.txt.\n");
+        reval = FAIL;
+    }
+    \end{tcblisting}
+\end{frame}
+
+% --- SLIDE 37: VÍ DỤ 3 (CODE PHẦN 2) ---
+% PDF Page 37
+\begin{frame}[fragile]{Ví dụ}
+    % Sử dụng tcblisting tích hợp minted để làm nổi bật các trường của struct
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+    else {
+        /* Doc du lieu tu file vao mang cac cau truc */
+        while (fscanf(fp, "%d%s%lf", &arr[i].no, arr[i].name, 
+                      &arr[i].price) != EOF) {
+            i++;
+        }
+        n = i; /* Luu lai so luong phan tu thuc te da doc */
+        
+        /* Hien thi danh sach ra man hinh voi dinh dang cot */
+        for (i = 0; i < n; i++) {
+            printf("%-6d%-24s%-6.2f\n", arr[i].no, arr[i].name, 
+                   arr[i].price);
+        }
+        fclose(fp);
+    }
+    return reval;
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 38 (FIXED FINAL): BÀI TẬP (DANH SÁCH LỚP) ---
+% PDF Page 38: Text chuẩn theo yêu cầu và ảnh image_1730b6.png
+\begin{frame}[fragile]{Bài tập}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=1em]
+        \item Bài tập 1. Tạo một file văn bản nội dung là danh sách lớp gồm ít nhất 6 sinh viên. Mỗi dòng gồm 4 trường sau:
+        
+        \item STT(số thứ tự) Mã số sinh viên Họ và tên (không chứa ký tự trắng) Số điện thoại. Ví dụ
+        \begin{itemize}[label=$\bullet$, itemsep=0.3em]
+            \item 1 20181110 Bui\_Van 0903112234
+            \item 2 20182111 Joshua\_Kim 0912123232
+        \end{itemize}
+
+        \item Viết chương trình đọc tập tin trên vào một mảng các cấu trúc phù hợp. Chương trình yêu cầu nhập bổ sung thêm trường điểm cho mỗi sinh viên sau đó ghi lại kết quả vào tập tin bangdiem.txt (transcript.txt) gồm tất cả các trường nói trên (cùng trường điểm).
+    \end{itemize}
+\end{frame}
+\end{document}

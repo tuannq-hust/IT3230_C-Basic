@@ -1,0 +1,1378 @@
+% =========================================================
+% KHAI BÁO CẤU HÌNH (PREAMBLE)
+% =========================================================
+\documentclass[aspectratio=169, 9pt]{beamer}
+
+% Load theme HUST (nhớ để file beamerthemeHUST.sty cùng thư mục)
+\usetheme[theme=blue,logo=logowithtextvi]{HUST} 
+
+% Các package cần thiết
+\usepackage[T5]{fontenc} % Hỗ trợ tiếng Việt
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}      
+\usepackage{enumitem}     
+\usepackage{tcolorbox}    
+\usepackage{listings}     
+\usepackage{verbatim}
+\usepackage{amsmath}
+\usepackage[table]{xcolor}
+\usepackage{tikz}
+\usepackage{minted}
+
+\usetikzlibrary{decorations.pathreplacing,arrows.meta}
+\tcbuselibrary{listingsutf8, skins, minted}
+
+% Định nghĩa lệnh đặt nội dung tự do
+\newcommand{\placecontent}[4]{%
+  \tikz[remember picture,overlay]
+    \node[anchor=north west]
+      at ([xshift=#1,yshift=-#2]current page.north west)
+      {\parbox{#3}{#4}};
+}
+
+% Thông tin metadata
+\title{LẬP TRÌNH C CƠ BẢN}
+\author{SoICT - HUST}
+\date{}
+
+% Chỉnh footer hiện số trang
+\setbeamertemplate{footline}{%
+  \hfill%
+  \insertframenumber\hspace{0.5cm}\vspace{0.3cm}
+}
+
+% =========================================================
+% NỘI DUNG CHÍNH (BODY)
+% =========================================================
+\begin{document}
+
+% ==================================================================
+% --- WEEK 3: STRUCT & DYNAMIC MEMORY ALLOCATION ---
+% ==================================================================
+
+% --- SLIDE 1 (PDF Page 1): BRAND SLIDE (Trang bìa HUST) ---
+\HUSTInsertBrandSlide
+
+% --- SLIDE 2 (PDF Page 2): TITLE SLIDE ---
+{
+\HUSTUseBackground{onelove.pdf}
+\begin{frame}
+  \ifdefstring{\insertaspectratio}{169}{
+    % Logo góc
+    \HUSTCornerImage{assets/logo/04.pdf}
+
+    % Tên môn học
+    \placecontent{0.5cm}{0.33\paperheight}{0.85\paperwidth}{
+        \color{\HUSTFrameTitleTextColor}\bfseries\fontsize{22pt}{30pt}\selectfont
+        LẬP TRÌNH C CƠ BẢN
+    }
+    
+    % Tên bài học (Đã fix lại tiêu đề cho đúng nội dung tuần 3)
+    \placecontent{0.5cm}{0.60\paperheight}{0.8\paperwidth}{
+        \color{\HUSTFrameTitleTextColor}\fontsize{14pt}{18pt}\selectfont
+        Cấu trúc \& Cấp phát bộ nhớ động
+    }
+  }{}
+\end{frame}
+}
+
+% --- SLIDE 3 (PDF Page 3): NỘI DUNG ---
+\begin{frame}{Nội dung}
+    \begin{itemize}[label=$\bullet$, itemsep=1em]
+        \item Ôn tập kiểu cấu trúc
+        \item Cấp phát bộ nhớ động
+        \item Thao tác với tập tin nhị phân
+        \item Các bài tập lập trình
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 4 (PDF Page 4): CHUYỂN MỤC (SECTION SLIDE) ---
+{
+\HUSTUseBackground{theme_hust_oneside.pdf}
+\begin{frame}
+    \placecontent{0.38\paperwidth}{0.45\paperheight}{0.6\paperwidth}{
+        \centering
+        \color{HUSTRed}\bfseries\fontsize{24pt}{28pt}\selectfont
+        Cấp phát bộ nhớ động
+    }
+\end{frame}
+}
+\section{Cấp phát bộ nhớ động}
+
+% --- SLIDE 5 (PDF Page 5): CẤP PHÁT BỘ NHỚ ĐỘNG (LÝ THUYẾT) ---
+\begin{frame}{Cấp phát bộ nhớ động}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item Các mảng thông thường có kích thước cố định được sử dụng để lưu trữ được tối đa một số lượng các phần tử được biết trước tại thời điểm biên dịch.
+        \item Kích thước này không thể thay đổi sau khi chương trình được tạo ra.
+        \item Tuy nhiên chúng ta không thể luôn biết trước thực tế sử dụng chương trình sẽ cần lưu trữ làm việc với bao nhiêu phần tử.
+        
+        \item \textbf{Kỹ thuật cấp phát bộ nhớ động (dynamic memory allocation):}
+        \begin{itemize}[label=$\circ$, itemsep=0.4em]
+            \item Xin hệ thống cấp phát số lượng bộ nhớ theo yêu cầu tại thời điểm chạy chương trình.
+            \item Bộ nhớ cấp phát được quản lý bởi một con trỏ.
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 6 (FIXED): HÀM MALLOC ---
+\begin{frame}[fragile]{Hàm malloc}
+    
+    \vspace{0.3cm}
+    
+    % Dòng code màu xanh, in đậm, to rõ
+    {\color{blue}\bfseries\large \texttt{void * malloc(unsigned int nbytes);}}
+    
+    \vspace{0.5cm}
+
+    \begin{itemize}[label=$\bullet$, itemsep=1em]
+        \item Xin hệ thống cấp phát một vùng (khối) bộ nhớ có kích thước \textbf{nBytes}
+        \item \textbf{malloc} trả về một con trỏ tới vùng nhớ nếu việc xin cấp phát thành công, trả về con trỏ \textbf{NULL} nếu thất bại.
+        \item Lưu ý: \textcolor{red}{Luôn luôn kiểm tra} xem bộ nhớ có được cấp phát thành công hay không.
+        \item Thuộc thư viện \textbf{stdlib.h}: \textcolor{blue}{\textbf{\texttt{\#include <stdlib.h>}}}
+    \end{itemize}
+    
+\end{frame}
+
+% --- SLIDE 7 (PDF Page 7): VÍ DỤ & BÀI TẬP (ĐIỀN CODE) ---
+\begin{frame}[fragile]{Ví dụ \& bài tập: Điền đoạn mã nguồn còn thiếu}
+    % Sử dụng tcblisting để tích hợp minted và khung viền an toàn
+    \begin{tcblisting}{
+        colback=white,          % Màu nền trắng
+        colframe=black,         % Viền đen
+        boxrule=0.5pt,          % Độ dày viền
+        arc=0pt,                % Bo góc (0pt là vuông góc)
+        listing engine=minted,  % Bắt buộc: Sử dụng engine minted
+        minted language=c,      % Ngôn ngữ C
+        minted options={        % Các tùy chọn cho code
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble,         % Tự động xóa khoảng trắng thừa ở đầu dòng
+            baselinestretch=1
+        },
+        listing only,           % Chỉ hiện code, không biên dịch kết quả
+        left=5mm, top=2mm, bottom=2mm % Căn lề nội bộ cho thoáng
+    }
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int i, n, *p;
+    printf("How many numbers do you want to enter?\n");
+    scanf("%d", &n);
+    
+    p = (int*)malloc(n * sizeof(int));
+    if (p == NULL) {
+        printf("Memory allocation failed!\n");
+        return 1;
+    }
+    
+    /* Nhap cac so nguyen */
+    ... 
+    
+    /* Hien thi chung theo chieu nguoc lai */
+    ...
+    
+    free(p); /* Giai phong bo nho */
+    return 0;
+}
+    \end{tcblisting}
+\end{frame}
+
+% --- SLIDE 8 (PDF Page 8): HƯỚNG DẪN (ĐÁP ÁN) ---
+\begin{frame}[fragile]{Hướng dẫn}
+    % Sử dụng tcblisting để đảm bảo đồng bộ font chữ và màu sắc với Slide 7
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+int main() {
+    /* ... (Phan khai bao va cap phat nhu tren) ... */
+
+    /* Nhap lieu cac so nguyen - phan tu mang dong */
+    printf("Please enter numbers now:\n");
+    for (i = 0; i < n; i++) {
+        scanf("%d", &p[i]);
+    }
+
+    /* Hien thi theo chieu nguoc */
+    printf("The numbers in reverse order are \n");
+    for (i = n - 1; i >= 0; --i) {
+        printf("%d ", p[i]);
+    }
+    printf("\n");
+    
+    free(p);
+    return 0;
+}
+    \end{tcblisting}
+\end{frame}
+
+% --- SLIDE 9 (FIXED): VÌ SAO CẦN ÉP KIỂU? ---
+\begin{frame}[fragile]{Vì sao cần ép kiểu?}
+    
+    \vspace{0.5cm}
+    
+    Phép ép kiểu trong câu lệnh
+    
+    \vspace{0.2cm}
+    % Code line 1: p và malloc đen đậm, int và sizeof xanh đậm
+    \hspace{0.5cm} {\large \texttt{\textbf{p} = (\textcolor{blue}{\textbf{int}} *)\textbf{malloc}(n*\textcolor{blue}{\textbf{sizeof}}(\textcolor{blue}{\textbf{int}}));}}
+    
+    \vspace{0.2cm}
+    là cần thiết vì hàm \textbf{malloc} trả về \textcolor{blue}{\textbf{void *}} :
+    
+    \vspace{0.2cm}
+    % Code line 2: void * và unsigned int xanh đậm, malloc và nbytes đen đậm
+    \hspace{0.5cm} {\large \texttt{\textcolor{blue}{\textbf{void *}} \textbf{malloc}(\textcolor{blue}{\textbf{unsigned int}} \textbf{nbytes});}}
+    
+    \vspace{0.8cm}
+    
+    Kiểu (\textcolor{blue}{\textbf{void *}}) đặc tả một con trỏ khái quát, có thể được ép kiểu về bất cứ kiểu con trỏ nào.
+    
+\end{frame}
+% --- SLIDE 10 (FIXED): HÀM CALLOC ---
+\begin{frame}[fragile]{Hàm calloc}
+    
+    \vspace{0.3cm}
+    
+    % Dòng nguyên mẫu: void*, size_t màu xanh; calloc màu đen
+    {\large \texttt{\textcolor{blue}{\textbf{void *}}\textbf{calloc}(\textcolor{blue}{\textbf{size\_t nitems}}, \textcolor{blue}{\textbf{size\_t size}});}}
+    
+    \vspace{0.5cm}
+
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item Cấp phát động vùng nhớ gồm một số xác định nitems các phần tử cùng kiểu, mỗi phần tử có kích thước size byte.
+        \item Khởi tạo các phần tử với giá trị mặc định là 0, trong khi hàm malloc không tiến hành khởi tạo cho mảng cấp phát.
+        \item Trả về một con trỏ tới vùng nhớ nếu việc xin cấp phát thành công, trả về con trỏ \textbf{NULL} nếu thất bại.
+        \item \texttt{\textcolor{blue}{\textbf{ptr = (float*) calloc(25,sizeof(float));}}}
+    \end{itemize}
+    
+\end{frame}
+% --- SLIDE 11 (PDF Page 11): HÀM REALLOC ---
+\begin{frame}[fragile]{Tái cấp phát bộ nhớ với hàm Reallocate}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.6em]
+        \item Đôi khi chương trình cần cấp phát thêm bộ nhớ sau lần xin cấp phát đầu tiên.
+        \item Nguyên mẫu:
+        \vspace{0.1cm}
+        {\large \texttt{\textcolor{blue}{\textbf{void *}}\textbf{realloc}(\textcolor{blue}{\textbf{void *ptr}}, \textcolor{blue}{\textbf{size\_t size}});}}
+        \vspace{0.1cm}
+        
+        \item Thay đổi kích thước vùng nhớ trỏ bởi con trỏ \texttt{ptr} đã được cấp phát trước đó với hàm \texttt{malloc} hoặc \texttt{calloc}.
+        \item \textbf{Các tham số:}
+        \begin{itemize}[label=$\circ$, itemsep=0.3em]
+            \item \texttt{ptr}: là con trỏ tới vùng nhớ đã được cấp phát và cần cấp phát lại. Nếu con trỏ này là NULL, một vùng nhớ mới sẽ được cấp phát và trả về bởi hàm.
+            \item \texttt{size}: Kích thước mới của vùng nhớ tính theo đơn vị byte. Nếu nó là 0 và \texttt{ptr} đang trỏ tới một vùng nhớ đã được cấp phát, vùng nhớ trỏ bởi \texttt{ptr} này được giải phóng và hàm trả về NULL.
+        \end{itemize}
+        
+        \item \textbf{Giá trị trả về:} Trả về một con trỏ tới vùng nhớ nếu yêu cầu cấp phát lại thành công, trả về con trỏ NULL nếu thất bại.
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 12 (PDF Page 12): MINH HỌA REALLOC (ẢNH) ---
+\begin{frame}{Minh họa hàm realloc}
+    \begin{center}
+        % Ảnh Capture4.PNG nằm trong thư mục week_03_resources
+        \includegraphics[width=0.85\textwidth]{week_03_resources/realloc.png}
+        
+        \vspace{0.2cm}
+        \textit{\footnotesize Nguồn: geeksforgeeks}
+    \end{center}
+\end{frame}
+
+% --- SLIDE 13 (PDF Page 13): VÍ DỤ REALLOC ---
+\begin{frame}[fragile]{Ví dụ}
+    % Sử dụng tcblisting kết hợp minted để đồng bộ giao diện toàn bài giảng
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int main() {
+    char *str;
+    
+    /* Cap phat bo nho ban dau */
+    str = (char*)malloc(15);
+    strcpy(str, "tutorialspoint");
+    printf("String = %s, Address = %p\n", str, (void*)str);
+
+    /* Cap phat lai bo nho (mo rong) */
+    str = (char*)realloc(str, 25);
+    strcat(str, ".com");
+    printf("String = %s, Address = %p\n", str, (void*)str);
+
+    free(str);
+    return 0;
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 14 (PDF Page 14): HÀM FREE ---
+\begin{frame}[fragile]{Giải phóng bộ nhớ cấp phát}
+    \vspace{0.3cm}
+    
+    {\large \texttt{\textcolor{blue}{\textbf{void}} \textbf{free}(\textcolor{blue}{\textbf{void *ptr}});}}
+    
+    \vspace{0.5cm}
+    
+    \begin{itemize}[label=$\bullet$, itemsep=1em]
+        \item Hàm \texttt{free(p)} giải phóng bộ nhớ cấp phát trỏ bởi \texttt{p}.
+        \item Nếu \texttt{p} không trỏ tới một vùng nhớ nào, một lỗi thực thi chương trình sẽ xuất hiện.
+        \item \textbf{Lưu ý:} Luôn nhớ giải phóng các vùng nhớ cấp phát động khi không còn cần đến chúng.
+        \item Ví dụ: Khi thoát chương trình.
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 15 (PDF Page 15): VÍ DỤ 1 (ĐỀ BÀI MY_STRCAT) ---
+\begin{frame}[fragile]{Ví dụ}
+    \small
+    \textbf{Ví dụ 1.}
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item Cài đặt hàm \texttt{my\_strcat}:
+        \begin{itemize}[label=$\circ$, itemsep=0.4em]
+            \item \textbf{Đầu vào:} là hai xâu ký tự \texttt{s1} và \texttt{s2}.
+            \item \textbf{Đầu ra:} một con trỏ - trỏ tới vùng nhớ động chứa nội dung là xâu kết quả của phép nối hai xâu \texttt{s1} và \texttt{s2}.
+            \item Ví dụ: Phép nối \texttt{"hello\_"} và \texttt{"world!"} trả về \texttt{"hello\_world!"}.
+        \end{itemize}
+        \item Yêu cầu: Sử dụng kỹ thuật cấp phát bộ nhớ động.
+        \item Kiểm tra lại các hàm đã viết.
+    \end{itemize}
+\end{frame}
+% --- SLIDE 16 (PDF Page 16): ĐÁP ÁN - HÀM MY_STRCAT ---
+\begin{frame}[fragile]{Đáp án – hàm my\_strcat}
+    % Sử dụng tcblisting kết hợp minted để đồng bộ hóa giao diện và syntax highlighting
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+char* my_strcat(char* str1, char* str2) {
+    int len1, len2;
+    char* result;
+
+    len1 = strlen(str1);
+    len2 = strlen(str2);
+
+    /* Cap phat bo nho: tong do dai + 1 cho ky tu ket thuc chuoi '\0' */
+    result = (char*)malloc((len1 + len2 + 1) * sizeof(char));
+
+    if (result == NULL) {
+        printf("Allocation failed! Check memory\n");
+        return NULL;
+    }
+
+    strcpy(result, str1);
+    strcpy(result + len1, str2);
+
+    return result;
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 17 (PDF Page 17): ĐÁP ÁN - HÀM MAIN ---
+\begin{frame}[fragile]{Đáp án: hàm main()}
+    % Sử dụng tcblisting tích hợp minted để thống nhất font chữ và khung hình
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+int main() {
+    char str1[MAX_LEN + 1], str2[MAX_LEN + 1];
+    char* cat_str;
+
+    printf("Please enter two strings\n");
+    scanf("%100s", str1);
+    scanf("%100s", str2);
+
+    cat_str = my_strcat(str1, str2);
+
+    if (cat_str == NULL) {
+        printf("Problem allocating memory!\n");
+        return 1;
+    }
+
+    printf("The concatenation of %s and %s is %s\n", str1, str2, cat_str);
+
+    /* Luon giai phong bo nho sau khi su dung */
+    free(cat_str); 
+
+    return 0;
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 18 (FIXED): BÀI TẬP (SUBSTR) ---
+% Chuẩn theo ảnh image_16481c.png
+\begin{frame}[fragile]{Bài tập}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=1em]
+        \item Bài tập 1. Xây dựng và chạy minh họa (demo) hàm sau
+        \begin{itemize}[label=$\bullet$, itemsep=0.5em]
+            \item \texttt{char* subStr(char* s1, int offset, int number)}
+        \end{itemize}
+        
+        \item Hàm tách xâu con từ xâu s1 bắt đầu từ ký tự tại chỉ số \textcolor{green}{\textbf{offset}} (tính từ 0) và có độ dài \textcolor{green}{\textbf{number}} ký tự.
+        
+        \item Chú ý kiểm tra tính hợp lệ của các đối số. Trong trường hợp giá trị number lớn hơn độ dài phần còn lại của xâu s1 tính từ vị trí offset, trả về xâu con là phần còn lại của s1 tính từ vị trí offset.
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 19 (PDF Page 19): CHUYỂN MỤC (STRUCT) ---
+{
+\HUSTUseBackground{theme_hust_oneside.pdf}
+\begin{frame}
+    \placecontent{0.38\paperwidth}{0.45\paperheight}{0.6\paperwidth}{
+        \centering
+        \color{HUSTRed}\bfseries\fontsize{24pt}{28pt}\selectfont
+        Struct – Cấu trúc
+    }
+\end{frame}
+}
+\section{Struct – Cấu trúc}
+% --- SLIDE 20 (FIXED): CẤU TRÚC (ĐỊNH NGHĨA) ---
+% Box căn giữa, nền xanh nhạt giống ảnh image_164139.png
+\begin{frame}[fragile]{Cấu trúc – Kiểu dữ liệu do người dùng định nghĩa}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item Kết hợp nhiều biến trong một thực thể phức hợp – dưới một tên.
+        \item Là một cách thuận tiện để nhóm các thông tin có liên quan (đến chung 1 thực thể trong bài toán) lại với nhau.
+        \item Các biến góp phần tạo ra một \textcolor{blue}{\textbf{struct}} được gọi là các thành phần hay trường.
+    \end{itemize}
+    
+    \vspace{0.4cm}
+    
+    % Căn giữa box code với môi trường center
+    \begin{center}
+        \begin{tcolorbox}[colback=blue!5, colframe=blue!40!gray, boxrule=0.5pt, arc=0pt, width=0.7\textwidth]
+\begin{lstlisting}[language=C, basicstyle=\ttfamily\small, keywordstyle=\color{blue}]
+struct struct-name 
+{
+    field-type1 field-name1;
+    field-type2 field-name2;
+    field-type3 field-name3;
+    ...
+};
+\end{lstlisting}
+        \end{tcolorbox}
+    \end{center}
+\end{frame}
+
+% --- SLIDE 21 (PDF Page 21): VÍ DỤ STRUCT (SỐ PHỨC) ---
+\begin{frame}[fragile]{Ví dụ: Kiểu số phức}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.5em]
+        \item Ví dụ định nghĩa kiểu số phức:
+    \end{itemize}
+    
+    \vspace{0.1cm}
+    \begin{tcolorbox}[colback=white, colframe=black, boxrule=0.5pt, arc=0pt]
+\begin{lstlisting}[language=C, basicstyle=\ttfamily\scriptsize, keywordstyle=\color{blue}]
+struct complex {
+    int real;
+    int img;
+};
+struct complex num1, num2, num3;
+\end{lstlisting}
+    \end{tcolorbox}
+    
+    \vspace{0.2cm}
+    \begin{itemize}[label=$\bullet$, itemsep=0.5em]
+        \item Kết hợp với \texttt{typedef} để đặt 1 tên kiểu khác:
+    \end{itemize}
+    
+    \vspace{0.1cm}
+    \begin{tcolorbox}[colback=white, colframe=black, boxrule=0.5pt, arc=0pt]
+\begin{lstlisting}[language=C, basicstyle=\ttfamily\scriptsize, keywordstyle=\color{blue}]
+typedef struct complex {
+    int real;
+    int img;
+} complex_t;
+
+complex_t num1, num2;
+\end{lstlisting}
+    \end{tcolorbox}
+\end{frame}
+
+% --- SLIDE 22 (PDF Page 22): VÍ DỤ POINT & CIRCLE ---
+\begin{frame}[fragile]{Ví dụ}
+    \small
+    \textbf{Ví dụ.} Cho hai cấu trúc sau:
+    \vspace{0.1cm}
+    \begin{tcolorbox}[colback=white, colframe=black, boxrule=0.5pt, arc=0pt]
+\begin{lstlisting}[language=C, basicstyle=\ttfamily\scriptsize, keywordstyle=\color{blue}]
+typedef struct point {
+    double x;
+    double y;
+} point_t;
+
+typedef struct circle {
+    point_t center;
+    double radius;
+} circle_t;
+\end{lstlisting}
+    \end{tcolorbox}
+    
+    \vspace{0.2cm}
+    \begin{itemize}[label=$\bullet$, itemsep=0.5em]
+        \item Viết hàm \texttt{is\_in\_circle} trả về 1 nếu điểm \texttt{p} nằm trong đường tròn \texttt{c}.
+        \item Kiểm tra hàm bằng một chương trình.
+    \end{itemize}
+\end{frame}
+% --- SLIDE 23 (PDF Page 23): HƯỚNG DẪN (CODE POINT & CIRCLE) ---
+\begin{frame}[fragile]{Hướng dẫn}
+    \vspace{0.1cm}
+    % Sử dụng tcblisting tích hợp minted để đồng bộ với toàn bộ bài giảng
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+int is_in_circle(point_t* p, circle_t* c) {
+    double x_dist, y_dist;
+    x_dist = p->x - c->center.x;
+    y_dist = p->y - c->center.y;
+    
+    /* Kiem tra khoang cach so voi ban kinh */
+    return (x_dist * x_dist + y_dist * y_dist <= c->radius * c->radius);
+}
+
+int main() {
+    point_t p;
+    circle_t c;
+
+    printf("Enter point coordinates\n"); 
+    scanf("%lf%lf", &p.x, &p.y);
+
+    printf("Enter circle center coordinates\n");
+    scanf("%lf%lf", &c.center.x, &c.center.y);
+
+    printf("Enter circle radius\n"); 
+    scanf("%lf", &c.radius);
+
+    if (is_in_circle(&p, &c))
+        printf("point is in circle\n");
+    else
+        printf("point is out of circle\n");
+
+    return 0;
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 24 (PDF Page 24): BÀI TẬP 1 (GIAO NHAU) ---
+\begin{frame}[fragile]{Bài tập}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item \textbf{Bài tập 1.} Viết hàm kiểm tra xem hai hình tròn có giao nhau hay không. Viết một chương trình cho phép tạo ra một mảng động các phần tử là các hình tròn, số lượng phần tử do người dùng cung cấp tại thời điểm chạy chương trình.
+        \item Người dùng có thể lựa chọn:
+        \begin{itemize}[label=$\circ$, itemsep=0.3em]
+            \item Nhập thủ công thông tin cho mỗi hình tròn.
+            \item Tự động sinh thông tin ngẫu nhiên cho mỗi hình tròn.
+        \end{itemize}
+        \item Chương trình sử dụng hàm nói trên và hiển thị:
+        \begin{itemize}[label=$\circ$, itemsep=0.3em]
+            \item Thông tin về các hình tròn.
+            \item Thông tin về hình tròn giao với nhiều hình tròn khác nhất (cùng với thông tin chi tiết, ví dụ giao với các hình tròn nào..)
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 25 (PDF Page 25): BÀI TẬP 2 (QUẢN LÝ SV NÂNG CAO) ---
+\begin{frame}[fragile]{Bài tập}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=1em]
+        \item \textbf{Bài tập 2.} Cải tiến bài tập tuần trước về chủ đề danh sách sinh viên – bảng điểm như sau:
+        
+        \item Thay vì mảng thông thường, chương trình cấp phát động đúng số bộ nhớ cần thiết để lưu trữ dữ liệu đọc từ file danh sách lớp.
+        
+        \item Bổ sung tính năng nhập thêm: chương trình hỏi số lượng sinh viên cần nhập bổ sung, sau đó tái cấp phát bộ nhớ động để có đủ bộ nhớ cho dữ liệu mới, sử dụng hàm \texttt{realloc}.
+        
+        \item \textbf{Chú ý:} Nhập file danh sách lớp ít nhất 10 dòng, dữ liệu đúng thực tế.
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 26 (PDF Page 26): CHUYỂN MỤC (FILE NHỊ PHÂN) ---
+{
+\HUSTUseBackground{theme_hust_oneside.pdf}
+\begin{frame}
+    \placecontent{0.38\paperwidth}{0.45\paperheight}{0.6\paperwidth}{
+        \centering
+        \color{HUSTRed}\bfseries\fontsize{24pt}{28pt}\selectfont
+        Làm việc với file nhị phân
+    }
+\end{frame}
+}
+\section{Làm việc với file nhị phân}
+% --- SLIDE 27 (PDF Page 27): CÁC THAM SỐ MODE & GIỚI THIỆU ---
+\begin{frame}{Các tham số mode cho tập tin nhị phân}
+    \small
+    \renewcommand{\arraystretch}{1.4}
+    \begin{table}
+        \centering
+        \begin{tabular}{|c|p{0.9\textwidth}|}
+            \hline
+            \textbf{mode} & \textbf{Ý nghĩa} \\
+            \hline
+            \texttt{"rb"} & Mở tập tin nhị phân đã có chỉ để đọc. \\
+            \hline
+            \texttt{"wb"} & Mở tập tin nhị phân chỉ để ghi. \\
+            \hline
+            \texttt{"ab"} & Mở tập tin nhị phân đã có để ghi thêm vào cuối. \\
+            \hline
+            \texttt{"r+b"} & Mở tập tin nhị phân đã có cho phép cả đọc và ghi. \\
+            \hline
+            \texttt{"w+b"} & Mở tập tin nhị phân cho phép cả đọc và ghi. Nếu file đã tồn tại, nội dung sẽ bị ghi đè. Nếu file không tồn tại, nó sẽ được tạo tự động. \\
+            \hline
+            \texttt{"a+b"} & Mở hoặc tạo tập tin nhị phân cho phép cả đọc và ghi vào cuối. \\
+            \hline
+        \end{tabular}
+    \end{table}
+
+    \vspace{0.2cm}
+    \begin{itemize}[label=$\bullet$, itemsep=0.4em]
+        \item C cung cấp hai hàm vào ra: \texttt{fread()} và \texttt{fwrite()}, cho phép thực hiện các thao tác vào ra theo các khối các byte.
+        \item Tương tự như các hàm khác, các hàm trên làm việc với đối số là các con trỏ file.
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 28 (PDF Page 28): HÀM FREAD ---
+\begin{frame}[fragile]{fread()}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item Nguyên mẫu của hàm \texttt{fread}:
+        \vspace{0.1cm}
+        {\large \texttt{\textcolor{blue}{\textbf{size\_t}} \textbf{fread}(\textcolor{blue}{\textbf{void *ptr}}, \textcolor{blue}{\textbf{size\_t size}}, \textcolor{blue}{\textbf{size\_t n}}, \textbf{FILE *stream});}}
+        \vspace{0.1cm}
+        
+        \item \textbf{ptr}: là con trỏ trỏ tới một mảng được sử dụng để lưu trữ dữ liệu đọc từ tập tin.
+        \item \textbf{size}: kích thước mỗi phần tử mảng (theo byte).
+        \item \textbf{n}: số phần tử dữ liệu đọc từ tập tin.
+        \item \textbf{stream}: con trỏ file gắn với file đang được đọc hay ghi.
+        \item Hàm trả về số phần tử thực sự được đọc thành công từ tập tin.
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 29 (PDF Page 29): HÀM FWRITE ---
+\begin{frame}[fragile]{fwrite()}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item Nguyên mẫu hàm \texttt{fwrite}:
+        \vspace{0.1cm}
+        {\large \texttt{\textcolor{blue}{\textbf{size\_t}} \textbf{fwrite}(\textcolor{blue}{\textbf{const void *ptr}}, \textcolor{blue}{\textbf{size\_t size}}, \textcolor{blue}{\textbf{size\_t n}}, \textbf{FILE *stream});}}
+        \vspace{0.1cm}
+        
+        \item \textbf{ptr}: là con trỏ trỏ tới một mảng được sử dụng để lưu trữ dữ liệu sẽ được ghi ra tập tin.
+        \item \textbf{size}: kích thước mỗi phần tử mảng (theo byte).
+        \item \textbf{n}: số phần tử dữ liệu ghi ra tập tin.
+        \item \textbf{stream}: con trỏ file gắn với file đang được đọc hay ghi.
+        \item Hàm trả về số phần tử thực sự được ghi thành công vào tập tin.
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 30 (PDF Page 30): HÀM FEOF ---
+\begin{frame}[fragile]{Hàm feof}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=1em]
+        \item Nguyên mẫu:
+        \vspace{0.1cm}
+        {\large \texttt{\textcolor{blue}{\textbf{int}} \textbf{feof}(\textbf{FILE *stream});}}
+        \vspace{0.1cm}
+        
+        \item Kiểm tra xem vị trí con trỏ file đã tới cuối tập tin hay chưa.
+        \item Hàm trả về \textbf{0} nếu chưa tới vị trí cuối file; ngược lại trả về giá trị \textbf{khác 0}.
+    \end{itemize}
+\end{frame}
+% --- SLIDE 31 (PDF Page 31): VÍ DỤ 1 (ĐỌC 80 BYTE) ---
+\begin{frame}[fragile]{Ví dụ}
+    \small
+    \textbf{Ví dụ 1.} Đọc 80 byte từ tập tin \texttt{haiku.txt}.
+    \vspace{0.1cm}
+    
+    % Sử dụng tcblisting tích hợp minted để thống nhất font chữ và khung hình
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+#define MAX_LEN 80
+int num;
+FILE* fptr2;
+char filename2[] = "haiku.txt";
+char buff[MAX_LEN + 1];
+
+if ((fptr2 = fopen(filename2, "r")) == NULL) {
+    printf("Cannot open %s.\n", filename2);
+    reval = FAIL;
+    exit(1);
+}
+
+......
+
+/* Doc toi da MAX_LEN phan tu, moi phan tu kich thuoc sizeof(char) */
+num = fread(buff, sizeof(char), MAX_LEN, fptr2);
+
+/* Them ky tu ket thuc chuoi vao sau phan tu cuoi cung doc duoc */
+buff[num] = '\0'; 
+
+printf("%s", buff);
+fclose(fptr2);
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 32 (PDF Page 32): VÍ DỤ 2 (COPY BLOCK - HÀM) ---
+\begin{frame}[fragile]{Ví dụ}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.5em]
+        \item \textbf{Ví dụ 2.} Viết chương trình sao chép tập tin (từ \texttt{lab1.txt} sang \texttt{lab1a.txt}) tương tự các bài tập trước nhưng sử dụng các thao tác đọc ghi tập tin theo khối dữ liệu.
+        \item Sử dụng các hàm: \texttt{fread}, \texttt{fwrite}, \texttt{feof}.
+    \end{itemize}
+    \vspace{0.1cm}
+    
+    % Sử dụng tcblisting tích hợp minted để thống nhất font chữ và khung hình
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+#include <stdio.h>
+enum { SUCCESS, FAIL };
+#define MAX_LEN 80
+
+void BlockReadWrite(FILE* fin, FILE* fout) {
+    int num;
+    char buff[MAX_LEN + 1];
+
+    while (!feof(fin)) {
+        /* Doc mot khoi toi da MAX_LEN ky tu */
+        num = fread(buff, sizeof(char), MAX_LEN, fin);
+        
+        /* Chuan hoa chuoi de in ra man hinh kiem tra */
+        buff[num] = '\0';
+        printf("%s", buff);
+        
+        /* Ghi dung 'num' phan tu thuc te da doc vao file dich */
+        fwrite(buff, sizeof(char), num, fout);
+    }
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 33 (PDF Page 33): VÍ DỤ 2 (COPY BLOCK - MAIN) ---
+\begin{frame}[fragile]{Đáp án}
+    % Sử dụng tcblisting tích hợp minted để thống nhất giao diện với Slide 32
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+int main() {
+    FILE *fptr1, *fptr2;
+    char filename1[] = "lab1a.txt";
+    char filename2[] = "lab1.txt";
+    int reval = SUCCESS;
+
+    /* Mo file dich de ghi */
+    if ((fptr1 = fopen(filename1, "w")) == NULL) {
+        printf("Cannot open %s.\n", filename1);
+        reval = FAIL;
+    } 
+    /* Mo file nguon de doc */
+    else if ((fptr2 = fopen(filename2, "r")) == NULL) {
+        printf("Cannot open %s.\n", filename2);
+        reval = FAIL;
+    } 
+    /* Neu ca hai file mo thanh cong */
+    else {
+        BlockReadWrite(fptr2, fptr1);
+        fclose(fptr1);
+        fclose(fptr2);
+    }
+
+    return reval;
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 34 (PDF Page 34): VÍ DỤ MYCAT (HÀM) ---
+\begin{frame}[fragile]{Ví dụ}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.5em]
+        \item \textbf{Ví dụ 2 (tiếp).} Viết chương trình \texttt{mycat} có chức năng tương tự lệnh \texttt{cat} trong Unix sử dụng kỹ thuật vào ra theo khối dữ liệu.
+        \item Gợi ý: Nhận đối số dòng lệnh, dùng hàm \texttt{fread}.
+    \end{itemize}
+    \vspace{0.1cm}
+    
+    % Sử dụng tcblisting tích hợp minted để thống nhất font chữ và khung hình
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+void BlockCat(FILE* fin) {
+    int num;
+    char buff[MAX_LEN + 1];
+
+    while (!feof(fin)) {
+        /* Doc mot khoi du lieu tu file */
+        num = fread(buff, sizeof(char), MAX_LEN, fin);
+        
+        /* Đảm bảo buffer là một chuỗi hợp lệ để in ra màn hình */
+        buff[num] = '\0'; 
+        
+        printf("%s", buff);
+    }
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 35 (PDF Page 35): VÍ DỤ MYCAT (MAIN) ---
+\begin{frame}[fragile]{Ví dụ}
+    % Sử dụng tcblisting tích hợp minted để thống nhất giao diện với Slide 34
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+int main(int argc, char* argv[]) {
+    FILE *fptr1;
+    int reval = SUCCESS;
+
+    /* Kiem tra so luong tham so dong lenh */
+    if (argc != 2) {
+        printf("The correct syntax should be: cat1 filename \n");
+        reval = FAIL;
+    } 
+    /* Mo file truyen vao tu doi so argv[1] */
+    else if ((fptr1 = fopen(argv[1], "r")) == NULL) {
+        printf("Cannot open %s.\n", argv[1]);
+        reval = FAIL;
+    } 
+    else {
+        BlockCat(fptr1);
+        fclose(fptr1);
+    }
+
+    return reval;
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 36 (PDF Page 36): BÀI TẬP 1 (COPY MENU) ---
+\begin{frame}[fragile]{Bài tập}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item \textbf{Bài tập 1.} Viết chương trình sao chép tập tin theo nhiều chế độ, hoạt động với giao diện menu dòng lệnh với các chức năng chính như sau:
+        \begin{enumerate}[label=\arabic*.]
+            \item Copy by character
+            \item Copy by line
+            \item Copy by block - optional size
+            \item Quit
+        \end{enumerate}
+        
+        \item Ở mỗi chức năng sao chép, sau khi hoàn thành việc sao chép, hiển thị thời gian thực hiện theo đơn vị mili giây để so sánh.
+        \item \textbf{Chú ý:} Tập tin nguồn phải là tập tin văn bản có kích thước tối thiểu là 640KB.
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 37 (PDF Page 37): BÀI TẬP 2 (PHONEBOOK ĐỀ BÀI) ---
+\begin{frame}[fragile]{Bài tập}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item \textbf{Bài tập 2.} Đọc và ghi tập tin nhị phân chứa các cấu trúc.
+        \item Giả sử bạn cần quản lý một danh bạ điện thoại của mình bằng chương trình. Định nghĩa một cấu trúc biểu diễn danh bạ gồm các trường "name", "telephone number", "e-mail address", và khai báo một mảng chứa tối đa 100 phần tử thuộc kiểu cấu trúc trên.
+        \item \textbf{Yêu cầu:}
+        \begin{itemize}[label=$\circ$, itemsep=0.3em]
+            \item Nhập liệu cho khoảng 10 phần tử mảng.
+            \item Chương trình sau đó ghi nội dung mảng với các phần tử nói trên vào tập tin có tên \texttt{phonebook.dat} sử dụng hàm \texttt{fwrite}.
+            \item Đọc lại dữ liệu từ tập tin vào mảng sử dụng hàm \texttt{fread} và in nội dung mảng ra màn hình để kiểm tra.
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+% --- SLIDE 38 (PDF Page 38): HƯỚNG DẪN (CODE KHAI BÁO) ---
+\begin{frame}[fragile]{Hướng dẫn}
+    % Sử dụng tcblisting tích hợp minted để thống nhất định dạng với các slide trước
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+enum { SUCCESS, FAIL };
+#define MAX_ELEMENT 20
+
+/* Dinh nghia cau truc danh ba dien thoai */
+typedef struct phoneaddress_t {
+    char name[20];
+    char tel[11];
+    char email[25];
+} phoneaddress;
+
+int main(void) {
+    FILE* fp;
+    phoneaddress phonearr[MAX_ELEMENT];
+    int i, n, irc; /* irc: ma ket qua tra ve */
+    int reval = SUCCESS;
+    
+    /* (Con tiep...) */
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 39 (PDF Page 39): HƯỚNG DẪN (CODE GHI FILE) ---
+\begin{frame}[fragile]{Hướng dẫn}
+    % Sử dụng tcblisting tích hợp minted để thống nhất định dạng
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+    printf("How many contacts do you want to enter (<20)? ");
+    scanf("%d", &n);
+
+    for (i = 0; i < n; i++) {
+        printf("name: "); scanf("%s", phonearr[i].name);
+        printf("tel: ");  scanf("%s", phonearr[i].tel);
+        printf("email: "); scanf("%s", phonearr[i].email);
+    }
+
+    if ((fp = fopen("phonebook.dat", "w+b")) == NULL) {
+        printf("Can not open %s.\n", "phonebook.dat");
+        reval = FAIL;
+    } 
+    else {
+        /* Ghi toan bo mang vao tap tin nhi phan */
+        irc = fwrite(phonearr, sizeof(phoneaddress), n, fp);
+        printf("fwrite return code = %d\n", irc);
+        fclose(fp);
+    }
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 40 (PDF Page 40): HƯỚNG DẪN (CODE ĐỌC FILE) ---
+\begin{frame}[fragile]{Hướng dẫn (tiếp)}
+    % Sử dụng tcblisting tích hợp minted để thống nhất định dạng
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+    /* Đọc dữ liệu từ file vào mảng */
+    if ((fp = fopen("phonebook.dat", "rb")) == NULL) {
+        printf("Can not open %s.\n", "phonebook.dat");
+        reval = FAIL;
+    } 
+    else {
+        irc = fread(phonearr, sizeof(phoneaddress), n, fp);
+        printf("fread return code = %d\n", irc);
+
+        /* Hiển thị nội dung đã đọc được */
+        for (i = 0; i < n; i++) {
+            printf("%s - %s - %s\n", phonearr[i].name, 
+                   phonearr[i].tel, phonearr[i].email);
+        }
+        fclose(fp);
+    }
+    return reval;
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 41 (PDF Page 41): BÀI TẬP 3 (GRADE MANAGER) ---
+\begin{frame}[fragile]{Bài tập}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item \textbf{Bài tập 3.} Viết chương trình đọc tập tin bảng điểm (\texttt{bangdiem.txt} kết quả của bài tập về danh sách sinh viên và bảng điểm đã cho) và lưu trữ dữ liệu sử dụng bộ nhớ động, sau đó ghi chúng ra tập tin nhị phân \texttt{grade.dat} (chứa mảng các phần tử kiểu cấu trúc về sinh viên).
+        
+        \item Chương trình có thể: đọc file \texttt{grade.dat} và hiển thị bảng điểm trên màn hình, tìm kiếm một sinh viên dựa trên mã số sinh viên và cập nhật điểm mới nhập từ người dùng và lưu vào tập tin.
+        
+        \item Chương trình nên được viết với tương tác menu dòng lệnh:
+        \begin{enumerate}[label=\arabic*.]
+            \item TextToDat
+            \item Display Dat file
+            \item Search and Update
+            \item Quit
+        \end{enumerate}
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 42 (PDF Page 42): CHUYỂN MỤC (SEEK & TELL) ---
+{
+\HUSTUseBackground{theme_hust_oneside.pdf}
+\begin{frame}
+    \placecontent{0.38\paperwidth}{0.45\paperheight}{0.6\paperwidth}{
+        \centering
+        \color{HUSTRed}\bfseries\fontsize{24pt}{28pt}\selectfont
+        Di chuyển trong tập tin
+    }
+\end{frame}
+}
+\section{Di chuyển trong tập tin}
+
+% --- SLIDE 43 (PDF Page 43): FSEEK ---
+\begin{frame}[fragile]{Truy cập ngẫu nhiên tập tin}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item Sử dụng hai hàm: \texttt{fseek()} và \texttt{ftell()}.
+        
+        \item \textbf{fseek():} hàm chuyển dịch vị trí con trỏ file tới một điểm mong muốn trong tập tin.
+        \vspace{0.1cm}
+        {\large \texttt{\textbf{int} \textbf{fseek}(\textbf{FILE *stream}, \textbf{long offset}, \textbf{int whence});}}
+        \vspace{0.1cm}
+        
+        \begin{itemize}[label=$\circ$, itemsep=0.3em]
+            \item \textbf{stream}: con trỏ tập tin.
+            \item \textbf{offset}: độ dài chuyển dịch tính theo byte.
+            \item \textbf{whence}: hằng số chỉ mốc và hướng dịch chuyển.
+            \begin{itemize}[label=-]
+                \item \texttt{SEEK\_SET}: từ đầu tập tin, dịch chuyển về phía cuối tập tin.
+                \item \texttt{SEEK\_CUR}: từ vị trí con trỏ file hiện tại, dịch chuyển về phía cuối tập tin.
+                \item \texttt{SEEK\_END}: từ cuối tập tin dịch chuyển về đầu tập tin.
+            \end{itemize}
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+% --- SLIDE 44 (PDF Page 44): FTELL & REWIND ---
+\begin{frame}[fragile]{Truy cập ngẫu nhiên tập tin}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=1em]
+        \item \textbf{Hàm ftell:} cho biết giá trị vị trí hiện tại của con trỏ file.
+        \item Cú pháp: {\large \texttt{\textbf{long} \textbf{ftell}(\textbf{FILE *stream});}}
+        \vspace{0.5cm}
+        \item \textbf{Hàm rewind():} Đặt lại vị trí con trỏ file ở đầu tập tin.
+        \item Cú pháp: {\large \texttt{\textbf{void} \textbf{rewind}(\textbf{FILE *stream});}}
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 45 (PDF Page 45): VÍ DỤ 1 (ĐỀ BÀI PHONEBOOK MODIFY) ---
+\begin{frame}[fragile]{Ví dụ: Đọc/Trích xuất một phần dữ liệu từ tập tin nhị phân}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item \textbf{Ví dụ 1.} Viết chương trình đọc một phần cụ thể trong dữ liệu danh bạ lưu trữ trong tập tin \texttt{phonebook.dat}.
+        
+        \item Ví dụ từ dữ liệu danh bạ (bản ghi) thứ 2 đến thứ 3, hay từ thứ 3 đến thứ 6. Sau đó thay đổi giá trị trường email và ghi lại vào tập tin ở đúng vị trí đã trích xuất.
+        
+        \item Chương trình cần cấp phát bộ nhớ để lưu trữ đúng lượng dữ liệu đọc ra từ tập tin khi chạy chương trình.
+        \begin{itemize}[label=$\circ$]
+            \item Ví dụ cần mảng động với 4 phần tử cấu trúc để lưu dữ liệu từ phần tử thứ 3 đến thứ 6.
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+% --- SLIDE 46 (PDF Page 46): ĐÁP ÁN (CODE PHẦN 1) ---
+\begin{frame}[fragile]{Đáp án}
+    % Sử dụng tcblisting tích hợp minted để thống nhất định dạng
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+#include <stdio.h>
+#include <stdlib.h>
+
+enum { SUCCESS, FAIL };
+#define MAX_ELEMENT 20
+
+/* the phone book structure */
+typedef struct phoneaddress {
+    char name[20];
+    char tel[11];
+    char email[25];
+} phoneaddress;
+
+int main(void) {
+    FILE* fp;
+    phoneaddress* phonearr; /* Khai bao con tro de cap phat dong */
+    int i, n, irc;          /* irc: return code */
+    int reval = SUCCESS;
+
+    printf("Read from 2nd data to 3rd data \n");
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 47 (PDF Page 47): ĐÁP ÁN (CODE PHẦN 2) ---
+\begin{frame}[fragile]{Đáp án}
+    % Sử dụng tcblisting tích hợp minted để thống nhất định dạng
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+    if ((fp = fopen("phonebook.dat", "r+b")) == NULL) {
+        printf("Can not open %s.\n", "phonebook.dat");
+        reval = FAIL;
+    }
+    
+    /* Cap phat bo nho dong cho 2 cau truc phoneaddress */
+    phonearr = (phoneaddress*)malloc(2 * sizeof(phoneaddress));
+    if (phonearr == NULL) {
+        printf("Memory allocation failed!\n");
+        return FAIL;
+    }
+
+    /* Nhay den vi tri ban ghi thu 2 (bo qua ban ghi dau tien) */
+    if (fseek(fp, 1 * sizeof(phoneaddress), SEEK_SET) != 0) {
+        printf("Fseek failed!\n");
+        return FAIL;
+    }
+    
+    /* Doc 2 ban ghi tiep theo vao vung nho vua cap phat */
+    irc = fread(phonearr, sizeof(phoneaddress), 2, fp);
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 48 (PDF Page 48): ĐÁP ÁN (CODE PHẦN 3) ---
+\begin{frame}[fragile]{Đáp án}
+    % Sử dụng tcblisting tích hợp minted để thống nhất định dạng
+    \begin{tcblisting}{
+        colback=white, 
+        colframe=black, 
+        boxrule=0.5pt, 
+        arc=0pt,
+        listing engine=minted, 
+        minted language=c,
+        minted options={
+            fontsize=\scriptsize, 
+            breaklines, 
+            autogobble, 
+            baselinestretch=1
+        },
+        listing only,
+        left=5mm, top=2mm, bottom=2mm
+    }
+    for (i = 0; i < 2; i++) {
+        printf("%s-", phonearr[i].name);
+        printf("%s-", phonearr[i].tel);
+        printf("%s\n", phonearr[i].email);
+    }
+    
+    /* Chỉnh sửa dữ liệu trong bộ nhớ (RAM) */
+    strcpy(phonearr[1].name, "Lan Hoa");
+    strcpy(phonearr[1].tel, "0923456");
+    strcpy(phonearr[1].email, "lovelybuffalo@hust.edu.vn");
+
+    /* Di chuyển con trỏ file về vị trí cũ để ghi đè dữ liệu mới */
+    fseek(fp, 1 * sizeof(phoneaddress), SEEK_SET);
+    irc = fwrite(phonearr, sizeof(phoneaddress), 2, fp);
+    printf(" fwrite return code = %d\n", irc);
+    
+    fclose(fp); 
+    free(phonearr); /* Giải phóng bộ nhớ động đã cấp phát */
+    return reval;
+}
+    \end{tcblisting}
+\end{frame}
+% --- SLIDE 49 (PDF Page 49): BÀI TẬP (DICTIONARY) ---
+\begin{frame}[fragile]{Bài tập}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item \textbf{Bài tập 1.} Viết chương trình chuyển đổi dữ liệu từ điển Việt Anh từ định dạng văn bản sang nhị phân.
+        \item Dữ liệu có tại: \texttt{http://www.denisowski.org/Vietnamese/vnedict.txt}
+        \begin{itemize}[label=$\circ$]
+            \item Miền Đất Hứa: the Promised Land
+            \item Miến : Burma (short for Miến Điện)
+            \item Miến Điện : Burma
+            \item Miền Trung : Central Vietnam
+        \end{itemize}
+        \item Sau đó chương trình đọc dữ liệu từ tập tin nhị phân, hỏi người dùng vị trí bắt đầu và kết thúc của mục từ và hiển thị các từ nằm ở các vị trí này trong từ điển.
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 50 (FIXED): BÀI TẬP QUẢN LÝ ĐIỆN THOẠI ---
+\begin{frame}[fragile]{Bài tập : Quản lý thông tin mô tả điện thoại di động}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.5em]
+        \item \textbf{Bài tập 2. Quản lý thông tin mô tả điện thoại di động}
+        
+        Từ các trang web của các showroom điện thoại di động, xây dựng một tập tin văn bản có tên \textbf{PhoneDB.txt} chứa thông tin về ít nhất 20 mẫu điện thoại gần đây như iPhone, Samsung, Oppo, Huawei, mỗi điện thoại một dòng.. theo định dạng sau
+        \begin{itemize}[label=$\bullet$]
+            \item Model \quad Memory Space (GB) \quad Screen Size (inches) \quad Price
+        \end{itemize}
+
+        \item \textbf{Viết chương trình có giao diện menu như sau:} [cite: 633]
+        \begin{enumerate}[label=\arabic*., itemsep=0.2em]
+            \item \textbf{Import DB from text:} Đọc file \texttt{PhoneDB.txt} và chuyển thành định dạng nhị phân \texttt{PhoneDB.dat} sử dụng kỹ thuật cấp phát động bộ nhớ.
+            \item \textbf{Import from DB:} Đọc dữ liệu từ file \texttt{PhoneDB.dat} và nạp vào bộ nhớ chương trình. Cho phép người dùng lựa chọn hai chế độ đọc: Đọc toàn bộ và đọc một phần (chỉ định vị trí bản ghi bắt đầu và kết thúc).
+            \item \textbf{Print All Database:} Hiển thị dữ liệu về các mẫu điện thoại trên màn hình, mỗi mẫu một dòng và căn thẳng các cột.
+            \item \textbf{Search by phone by Phone Model:} Tìm kiếm điện thoại dựa trên model do người dùng nhập. 
+            \item \textbf{Exit}
+        \end{enumerate}
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 51: BÀI TẬP CHIA TÁCH VÀ GHÉP FILE ---
+\begin{frame}[fragile]{Bài tập : Chia tách và ghép File}
+    \small
+    \begin{itemize}[label=$\bullet$, itemsep=0.8em]
+        \item \textbf{Bài tập 3. Chia tách và ghép File}
+        
+        Sử dụng tập tin \textbf{phonebook.dat} (kết quả của bài tập trên Lab) chứa ít nhất 20 số liên lạc. Viết các chương trình sau
+
+        \item Chương trình {\color{red}\textbf{filesplit}} nhận hai đối số: tên file nguồn (.dat) và một số nguyên N và tên hai file kết quả. Nó sẽ tách file nguồn thành 2 file, trong đó file đầu tiên chứa N số liên lạc đầu tiên và file thứ hai chứa các số liên lạc còn lại. Ví dụ
+        \begin{itemize}[label=$\bullet$]
+            \item {\color{red}\textbf{filesplit}} \textbf{phone.dat 10 phone1.dat phone2.dat}
+        \end{itemize}
+
+        \item Chương trình {\color{red}\textbf{filemerge}} ghép hai file đã tách thành một file:
+        \begin{itemize}[label=$\bullet$]
+            \item {\color{red}\textbf{filemerge}} \textbf{phone1.dat phone2.dat phone.dat}
+        \end{itemize}
+
+        \item Chương trình {\color{red}\textbf{fileread}} đọc và hiển thị danh sách các số liên lạc chứa trong một file .dat bất kỳ ra màn hình. Nó được sử dụng để kiểm tra kết quả thực hiện các chương trình filesplit and filemerge.
+    \end{itemize}
+\end{frame}
+\end{document}
